@@ -5,6 +5,7 @@
 #include<cstdio>
 #include<fstream>
 #include "mycv.h"
+#include "filter.h"
 using namespace std;
 
 const double pthold=0.9;
@@ -118,8 +119,8 @@ int main( int argc, char** argv )
 	capture = cvCaptureFromCAM(1);
 	cvNamedWindow( "cam", 1);
     cvMoveWindow("cam",100,100);
-    cvNamedWindow( "threshold", 1);
-    cvMoveWindow("threhold",800,100);
+    //cvNamedWindow( "threshold", 1);
+    //cvMoveWindow("threhold",800,100);
     if (!cvGrabFrame(capture))
     {
       cout<<"can not capture"<<endl;
@@ -139,6 +140,9 @@ int main( int argc, char** argv )
 
     IplConvKernel *cls=cvCreateStructuringElementEx(2,2,1,1,CV_SHAPE_RECT,0);
     CvPoint2D32f lp;
+    CvPoint pp;
+    LDFilter flt;
+    ldfilterinit(&flt,277,370);
     cvResize(frame,pframe);
     frameprepro(pframe,Vv,maxv);
     cvConvert(Vv,bg);
@@ -180,9 +184,19 @@ int main( int argc, char** argv )
           cvRunningAvg(wp3, bg, 0.09, ramask);
         }
         if (sta)
+        {
+          ldfilterupdate(&flt,lp);
+          if (sta>0)
+          {
+            //for (int i=1;i<=100;i++)
+              ldfilterupdate(&flt,lp);
+          }
           cvCircle(pframe,cvPointFrom32f(lp),6,dcl,2);
+        }
+        pp=ldfilterpredict(&flt);
+        cvCircle(pframe,pp,6,CV_RGB(0,0,255),2);
 		cvShowImage( "cam", pframe ); //显示一帧图像
-        cvShowImage("threshold",fiimg);
+        //cvShowImage("threshold",fiimg);
 		if (cvWaitKey(1)>=0)//视频速度
           break;
 	}
@@ -196,6 +210,7 @@ int main( int argc, char** argv )
     cvReleaseMat(&bg);
     cvReleaseMat(&ramask);
     cvReleaseStructuringElement(&cls);
+    ldfilterrelease(&flt);
     cvDestroyAllWindows();
    	return 0;
 }
