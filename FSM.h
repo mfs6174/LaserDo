@@ -1,7 +1,7 @@
 #ifndef FSM_H
 #define FSM_H
 
-#define LDbufsize 60
+#define MAXbufsize 90
 
 #define NONE2MOVE 1
 #define MOVE2NONE 2
@@ -20,12 +20,15 @@ struct LDfsm
   int state;
   CvPoint windowpoint;
   int iptcnt[3];
-  int iptbuf[LDbufsize];
-  CvPoint pntbuf[LDbufsize];
+  int iptbuf[MAXbufsize];
+  CvPoint pntbuf[MAXbufsize];
   int bufhd;
   int stsz,hdsz,tttl;
   int cnt;
   bool flag;
 };
 
+void ldfsminit(int stsize,int hdsize,int tttl);
+int ldfsmupdate(int ipt,CvPoint pnt);
+int ldfsmstate();
 #endif

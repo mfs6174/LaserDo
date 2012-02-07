@@ -7,13 +7,13 @@
 #include <cstring>
 #include <vector>
 #include <cmath>
-#include "mycv.h"
 #include "FSM.h"
 using namespace std;
 
 LDfsm fsm0;
 const int sqrrad=400;
 const int sttl=80;
+const int LDbufsize=40;
 
 inline int gt(int x,int y)
 {
@@ -35,6 +35,10 @@ void ldfsminit(int stsize,int hdsize,int tttl)
   fsm0.hdsz=hdsize;
   fsm0.tttl=tttl;
 }
+int ldfsmstate()
+{
+  return fsm0.state;
+}
 
 int ldfsmupdate(int ipt,CvPoint pnt)
 {
@@ -51,6 +55,7 @@ int ldfsmupdate(int ipt,CvPoint pnt)
   }
   fsm0.iptbuf[fsm0.bufhd]=ipt;
   fsm0.pntbuf[fsm0.bufhd]=pnt;
+  fsm0.iptcnt[ipt]++;
   int rtsgn=0;
   if (!fsm0.flag)
     return rtsgn;
