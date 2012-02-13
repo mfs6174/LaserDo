@@ -1,16 +1,20 @@
-#include "cv.h"
+ #include "cv.h"
 #include "highgui.h"
 #include <iostream>
 #include<cstdlib>
 #include<cstdio>
 #include<fstream>
+#include<vector>
+
 #include "mycv.h"
 #include "filter.h"
+#include "FSM.h"
+#include "Xoutput.h"
 using namespace std;
 
 const double pthold=0.9;
-const double redhold=225;
-
+const double redhold=215;
+const double slidefactor=3.0;
 inline void frameprepro(IplImage *fr,IplImage *dst,uchar res[])
 {
   int i,j;
@@ -106,9 +110,23 @@ int checkstatus(IplImage *src,CvPoint ct,int ars,int rd)
   return 1;
 }
 
+void draw1trace(const vector<CvPoint> &rec,IplImage *dst)
+{
+  int i;
+  CvScalar color=CV_RGB(0,0,255);
+  for (i=0;i<rec.size()-1;i++)
+    cvLine(dst,rec[i],rec[i+1],color,2);
+}
+
+void ldprocesstrace(vector<CvPoint> &rec,bool &flag0)
+{
+  flag0=true;
+}
+
 int main( int argc, char** argv )
 {
   	int fps=25; //捕捉帧率
+    bool sldorpnt=true;
     int Vhold=27;
     int chkrad=7;
     int ar=0;
@@ -140,13 +158,21 @@ int main( int argc, char** argv )
 
     IplConvKernel *cls=cvCreateStructuringElementEx(2,2,1,1,CV_SHAPE_RECT,0);
     CvPoint2D32f lp;
-    CvPoint pp;
+    CvPoint pp,ilp;
     LDFilter flt;
+    CvFont font;
+    string sstate[4]={"NONE","MOVE","STATIC","TRACK"};
+	cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX,1,1);
+
+    vector<CvPoint> tracerec;
     ldfilterinit(&flt,277,370);
+    ldfsminit(5,16,50);
+    ldxoinit();
     cvResize(frame,pframe);
     frameprepro(pframe,Vv,maxv);
     cvConvert(Vv,bg);
     int cnt=0;
+    bool nd2draw=false;
 	for(;;) //一直读
 	{
 		frame = cvQueryFrame( capture );
@@ -183,21 +209,83 @@ int main( int argc, char** argv )
           cvNot(fiimg,ramask);
           cvRunningAvg(wp3, bg, 0.09, ramask);
         }
+        ilp=cvPointFrom32f(lp);
         if (sta)
         {
           ldfilterupdate(&flt,lp);
           if (sta>0)
           {
-            //for (int i=1;i<=100;i++)
               ldfilterupdate(&flt,lp);
           }
-          cvCircle(pframe,cvPointFrom32f(lp),6,dcl,2);
+          cvCircle(pframe,ilp,6,dcl,2);
         }
         pp=ldfilterpredict(&flt);
-        cvCircle(pframe,pp,6,CV_RGB(0,0,255),2);
-		cvShowImage( "cam", pframe ); //显示一帧图像
-        //cvShowImage("threshold",fiimg);
-		if (cvWaitKey(1)>=0)//视频速度
+        int rtr=ldfsmupdate(sta,ilp);
+        switch (rtr)
+        {
+        case NONE2MOVE:
+          if (sldorpnt)
+          {
+            ldxomouseslide(ilp,slidefactor);
+          }
+          else
+          {
+            //incomplete
+          }
+          break;
+        case STATIC2MOVE:
+          if (sldorpnt)
+          {
+            ldxomouseslide(ilp,slidefactor);
+          }
+          else
+          {
+            //incomplete
+          }
+          break;
+        case MOVE2NONE:
+          ldxomousereset();
+          break;
+        case MOVE2STATIC:
+          break;
+        case STATIC2NONE:
+          ldxomousereset();
+          ldxoclick(cvPoint(-1,-1));
+          break;
+        case KEEPMOVE:
+          if (sta>0)
+            if (sldorpnt)
+            {
+              ldxomouseslide(ilp,slidefactor);
+            }
+            else
+            {
+              //incomplete
+            }
+          break;
+        case TRACKSTART:
+          ldxomousereset();
+          nd2draw=false;
+          tracerec.clear();
+          tracerec.push_back(pp);
+          break;
+        case TRACKABORT:
+          tracerec.clear();
+          break;
+        case TRACKFINISH:
+          ldprocesstrace(tracerec,nd2draw);
+          break;
+        case KEEPTRACK:
+          tracerec.push_back(pp);
+          break;
+        }
+        if (nd2draw)
+          draw1trace(tracerec,pframe);
+        int fsmstate=ldfsmstate();
+        cvPutText(pframe,(sstate[fsmstate]).c_str(),cvPoint(20,30),&font,CV_RGB(0,0,255));
+        //cvCircle(pframe,pp,6,CV_RGB(0,0,255),2);
+        cvShowImage( "cam", pframe ); //显示一帧图像
+		if (cvWaitKey(1)>=0)
           break;
 	}
 	cvReleaseCapture(&capture);
@@ -211,6 +299,7 @@ int main( int argc, char** argv )
     cvReleaseMat(&ramask);
     cvReleaseStructuringElement(&cls);
     ldfilterrelease(&flt);
+    ldxorelease();
     cvDestroyAllWindows();
    	return 0;
 }
