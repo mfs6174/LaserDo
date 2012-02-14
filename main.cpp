@@ -127,6 +127,7 @@ int main( int argc, char** argv )
 {
   	int fps=25; //捕捉帧率
     bool sldorpnt=true;
+    bool draw_mode=false;
     int Vhold=27;
     int chkrad=7;
     int ar=0;
@@ -165,6 +166,8 @@ int main( int argc, char** argv )
 	cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX,1,1);
 
     vector<CvPoint> tracerec;
+    vector< vector<CvPoint> > drawstore;
+    drawstore.clear();
     if (!sldorpnt)
     {
       ldxolocateinit(capture);
@@ -228,6 +231,9 @@ int main( int argc, char** argv )
         switch (rtr)
         {
         case NONE2MOVE:
+          nd2draw=false;
+          if ( (!tracerec.empty()) && draw_mode)
+            drawstore.push_back(tracerec);
           if (sldorpnt)
           {
             ldxomouseslide(ilp,slidefactor);
@@ -246,13 +252,20 @@ int main( int argc, char** argv )
           {
             ldxomouselocate(ilp);
           }
+          tracerec.clear();
           break;
         case MOVE2NONE:
           ldxomousereset();
           break;
         case MOVE2STATIC:
+          tracerec.clear();
+          tracerec.push_back(pp);
+          break;
+        case KEEPSTATIC:
+          tracerec.push_back(pp);
           break;
         case STATIC2NONE:
+          tracerec.clear();
           ldxomousereset();
           ldxoclick(cvPoint(-1,-1));
           break;
@@ -269,25 +282,32 @@ int main( int argc, char** argv )
           break;
         case TRACKSTART:
           ldxomousereset();
-          nd2draw=false;
-          tracerec.clear();
-          tracerec.push_back(pp);
+          nd2draw=true;
+          // tracerec.clear();
+          // tracerec.push_back(pp);
+          //改到进入static就提前开始记录
           break;
         case TRACKABORT:
+          nd2draw=false;
           tracerec.clear();
           break;
         case TRACKFINISH:
+          // for (int i=1;i<=2;i++)
+          //   tracerec.pop_back();
+          // tracerec.push_back(ilp);
           ldprocesstrace(tracerec,nd2draw);
           break;
         case KEEPTRACK:
-          tracerec.push_back(pp);
+          tracerec.push_back(ilp);//在没有搞定kalman滤波之前还是用真实轨迹吧
           break;
         }
+        if (draw_mode)
+          for (int i=0;i<drawstore.size();i++)
+            draw1trace(drawstore[i],pframe);
         if (nd2draw)
           draw1trace(tracerec,pframe);
         int fsmstate=ldfsmstate();
         cvPutText(pframe,(sstate[fsmstate]).c_str(),cvPoint(20,30),&font,CV_RGB(0,0,255));
-        //cvCircle(pframe,pp,6,CV_RGB(0,0,255),2);
         cvShowImage( "cam", pframe ); //显示一帧图像
 		if (cvWaitKey(1)>=0)
           break;
