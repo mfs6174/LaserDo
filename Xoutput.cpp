@@ -1,5 +1,6 @@
 /* ref: http://www.ishiboo.com/~danny/Projects/xwarppointer/ */
 #include "cv.h"
+#include "highgui.h"
 #include <iostream>
 #include <cstdio>
 #include <cstring>
@@ -18,6 +19,19 @@ int winwidth;
 int winheight;
 
 CvPoint lastp;
+Ldlocater locater;
+
+void Checkmousepos(int &x,int &y)
+{
+  if (x<0)
+    x=0;
+  if (y<0)
+    y=0;
+  if (x>winwidth)
+    x=winwidth;
+  if (y>winheight)
+    y=winheight;
+}
 
 //初始化
 void ldxoinit()
@@ -104,14 +118,7 @@ void ldxomouseslide(CvPoint now,double factor)
   GetCursorPos(x,y);
   x+=(int)dx;
   y+=(int)dy;
-  if (x<0)
-    x=0;
-  if (y<0)
-    y=0;
-  if (x>winwidth)
-    x=winwidth;
-  if (y>winheight)
-    y=winheight;
+  Checkmousepos(x,y);
   SetCursorPos(x,y);
   return;
 }
@@ -126,7 +133,16 @@ void ldxoclick(CvPoint pnt)
   {
   }
 }
+void ldxolocateinit(CvCapture * cap)
+{
+  
+}
 
 void ldxomouselocate(CvPoint ipnt,double para1)
 {
+  int x,y;
+  x=(int)(ipnt.x*locater.a+locater.c);
+  y=(int)(ipnt.y*locater.b+locater.d);
+  Checkmousepos(x,y);
+  SetCursorPos(x,y);
 }

@@ -165,6 +165,10 @@ int main( int argc, char** argv )
 	cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX,1,1);
 
     vector<CvPoint> tracerec;
+    if (!sldorpnt)
+    {
+      ldxolocateinit(capture);
+    }
     ldfilterinit(&flt,277,370);
     ldfsminit(5,16,50);
     ldxoinit();
@@ -230,7 +234,7 @@ int main( int argc, char** argv )
           }
           else
           {
-            //incomplete
+            ldxomouselocate(ilp);
           }
           break;
         case STATIC2MOVE:
@@ -240,7 +244,7 @@ int main( int argc, char** argv )
           }
           else
           {
-            //incomplete
+            ldxomouselocate(ilp);
           }
           break;
         case MOVE2NONE:
@@ -260,7 +264,7 @@ int main( int argc, char** argv )
             }
             else
             {
-              //incomplete
+              ldxomouselocate(ilp);
             }
           break;
         case TRACKSTART:

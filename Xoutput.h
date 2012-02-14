@@ -11,4 +11,7 @@ void ldxorelease();
 void ldxomouseslide(CvPoint now,double factor);
 void ldxomousereset();
 void ldxoclick(CvPoint pnt);
+void ldxolocateinit(CvCapture * cap);
+void ldxomouselocate(CvPoint ipnt,double para1=0.0);
+
 #endif
