@@ -94,7 +94,7 @@ int mouseClick(int button,int x,int y)
   if(XSendEvent(display, PointerWindow, True, 0xfff, &event) == 0)
     rtr=-1;
   XFlush(display);
-  usleep(100000);
+  usleep(50000);
   event.type = ButtonRelease;
   event.xbutton.state = 0x100;
   if(XSendEvent(display, PointerWindow, True, 0xfff, &event) == 0)
@@ -133,6 +133,19 @@ void ldxoclick(CvPoint pnt)
   {
   }
 }
+
+void ldxodoubleclick(CvPoint pnt)
+{
+  if (pnt.x<0)
+  {
+    mouseClick(Button1,pnt.x,pnt.y);
+    mouseClick(Button1,pnt.x,pnt.y);
+  }
+  else
+  {
+  }
+}
+
 void ldxolocateinit(CvCapture * cap)
 {
   

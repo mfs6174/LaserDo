@@ -1,4 +1,4 @@
- #include "cv.h"
+#include "cv.h"
 #include "highgui.h"
 #include <iostream>
 #include<cstdlib>
@@ -10,6 +10,7 @@
 #include "filter.h"
 #include "FSM.h"
 #include "Xoutput.h"
+#include "GR.h"
 using namespace std;
 
 const double pthold=0.9;
@@ -120,7 +121,11 @@ void draw1trace(const vector<CvPoint> &rec,IplImage *dst)
 
 void ldprocesstrace(vector<CvPoint> &rec,bool &flag0)
 {
+  int rtr;
   flag0=true;
+  rtr=ldgrinput(rec);
+  if (rtr==1)
+    ldxodoubleclick(cvPoint(-1,-1));
 }
 
 int main( int argc, char** argv )
@@ -146,7 +151,7 @@ int main( int argc, char** argv )
       exit(0);
     }
     frame=cvQueryFrame(capture);
-    fps=(int)cvGetCaptureProperty(capture,CV_CAP_PROP_FPS);
+    //fps=(int)cvGetCaptureProperty(capture,CV_CAP_PROP_FPS);
     IplImage *pframe=cvCreateImage(cvSize(370,277),frame->depth,3);
     IplImage *Vv=cvCreateImage(cvSize(370,277),frame->depth,1);
     CvMat *wp0=cvCreateMat(277, 370, CV_32FC1);
@@ -162,7 +167,7 @@ int main( int argc, char** argv )
     CvPoint pp,ilp;
     LDFilter flt;
     CvFont font;
-    string sstate[4]={"NONE","MOVE","STATIC","TRACK"};
+    string sstate[4]={"NONE","MOVING","STATIC","TRACKING"};
 	cvInitFont(&font,CV_FONT_HERSHEY_COMPLEX,1,1);
 
     vector<CvPoint> tracerec;
